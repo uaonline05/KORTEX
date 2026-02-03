@@ -508,6 +508,18 @@ function addMarkerToMap(m) {
         });
 }
 
+function toggleLayer(type) {
+    markersLayer.eachLayer(layer => {
+        if (layer.options.markerType === type) {
+            if (layer._icon) {
+                const currentDisplay = window.getComputedStyle(layer._icon).display;
+                layer._icon.style.display = currentDisplay === 'none' ? 'block' : 'none';
+                if (layer._shadow) layer._shadow.style.display = layer._icon.style.display;
+            }
+        }
+    });
+}
+
 async function addMarker(lat, lon, type, label, description) {
     try {
         const url = `${API_URL}/markers?lat=${lat}&lon=${lon}&type=${type}&label=${encodeURIComponent(label)}${description ? `&description=${encodeURIComponent(description)}` : ''}`;
@@ -518,9 +530,13 @@ async function addMarker(lat, lon, type, label, description) {
 
         if (response.ok) {
             loadMarkers();
+        } else {
+            // Local case: just add to map UI
+            addMarkerToMap({ lat, lon, type, label, description, created_by: 'LOCAL', created_at: new Date().toISOString() });
         }
     } catch (err) {
-        alert("Failed to add marker");
+        // Safe fallback for GitHub/Local file
+        addMarkerToMap({ lat, lon, type, label, description, created_by: 'LOCAL', created_at: new Date().toISOString() });
     }
 }
 
