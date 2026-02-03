@@ -1,5 +1,5 @@
 const IS_GITHUB = window.location.hostname.includes('github.io');
-const API_URL = IS_GITHUB ? "https://kortex-proxy.dev" : "http://127.0.0.1:8000";
+const API_URL = IS_GITHUB ? "https://kortex.mil.gov.ua/api" : "http://127.0.0.1:8000";
 let map;
 let markersLayer = L.layerGroup();
 let trenchesLayer = L.layerGroup();
@@ -31,7 +31,7 @@ function toggleAuth(isRegister) {
     document.getElementById("register-form").style.display = isRegister ? "block" : "none";
 }
 
-console.log("%c KORTEX SYSTEM READY [V3.2] ", "background: #0ea5e9; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
+console.log("%c KORTEX SYSTEM READY [V3.3] ", "background: #0ea5e9; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
 
 async function handleLogin() {
     const user = document.getElementById("username").value.trim().toLowerCase();
@@ -104,11 +104,11 @@ async function handleRegister() {
 
 function showAdvancedReg() {
     document.getElementById("auth-screen").style.display = "none";
-    document.getElementById("advanced-reg-overlay").style.display = "block";
+    document.getElementById("advanced-reg-overlay").classList.add("active");
 }
 
 function hideAdvancedReg() {
-    document.getElementById("advanced-reg-overlay").style.display = "none";
+    document.getElementById("advanced-reg-overlay").classList.remove("active");
     document.getElementById("auth-screen").style.display = "flex";
 }
 
