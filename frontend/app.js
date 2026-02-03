@@ -1,5 +1,5 @@
-// --- Configuration ---
-const API_URL = "http://127.0.0.1:8000";
+const IS_GITHUB = window.location.hostname.includes('github.io');
+const API_URL = IS_GITHUB ? "https://kortex-proxy.dev" : "http://127.0.0.1:8000";
 let map;
 let markersLayer = L.layerGroup();
 let trenchesLayer = L.layerGroup();
@@ -31,7 +31,7 @@ function toggleAuth(isRegister) {
     document.getElementById("register-form").style.display = isRegister ? "block" : "none";
 }
 
-console.log("%c KORTEX SYSTEM READY [V3.1] ", "background: #22c55e; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
+console.log("%c KORTEX SYSTEM READY [V3.2] ", "background: #0ea5e9; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
 
 async function handleLogin() {
     const user = document.getElementById("username").value.trim().toLowerCase();
@@ -39,9 +39,9 @@ async function handleLogin() {
 
     if (!user || !pass) return alert("Please fill all fields");
 
-    // NEW (V3.1): Super-Admin Local Authorization
+    // NEW (V3.2): Super-Admin Local Authorization
     if (user === "admin" && pass === "admin123") {
-        console.log("%c KORTEX: Super Admin Authorization Success. ", "background: #10b981; color: white;");
+        console.log("%c [AUTH] SUPER ADMIN GRANTED ACCESS ", "background: #10b981; color: white; font-weight: bold; padding: 2px 10px;");
         currentToken = "super_admin_demo";
         isAdmin = true;
         localStorage.setItem("token", "super_admin_demo");
