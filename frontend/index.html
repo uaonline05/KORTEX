@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KORTEX | WARSPACE</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Leaflet for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* In-page overrides for Auth and transitions */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: #0a0c10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-card {
+            background: #151921;
+            padding: 3rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .auth-input {
+            width: 100%;
+            background: #0a0c10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .auth-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .auth-btn {
+            width: 100%;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-btn:hover {
+            background: #2563eb;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 800;
+            margin-left: 8px;
+        }
+
+        .status-live {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-[#0a0c10] text-white">
+    <div class="scanline"></div>
+
+    <!-- Auth Section -->
+    <div id="auth-screen" class="auth-overlay">
+        <div class="auth-card">
+            <div class="logo" style="justify-content: center; margin-bottom: 2rem;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+                KORTEX <span>WARSPACE</span>
+            </div>
+            <div id="login-form">
+                <input type="text" id="username" class="auth-input" placeholder="Callsign (Логін)">
+                <input type="password" id="password" class="auth-input" placeholder="Encryption Key (Пароль)">
+                <button onclick="handleLogin()" class="auth-btn">Initialize Connection</button>
+                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #94a3b8;">
+                    Немає доступу? <a href="#" onclick="toggleAuth(true)" style="color: var(--accent-blue);">Request
+                        Access</a>
+                </p>
+            </div>
+            <div id="register-form" style="display: none;">
+                <input type="text" id="reg-username" class="auth-input" placeholder="New Callsign">
+                <input type="password" id="reg-password" class="auth-input" placeholder="New Encryption Key">
+                <button onclick="handleRegister()" class="auth-btn">Request Access</button>
+                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #94a3b8;">
+                    Вже є аккаунт? <a href="#" onclick="toggleAuth(false)" style="color: var(--accent-blue);">Login</a>
+                </p>
+            </div>
+            <div id="pending-msg" style="display: none; padding: 2rem 0;">
+                <h3 style="color: #f97316; margin-bottom: 1rem;">ACCESS PENDING</h3>
+                <p style="font-size: 0.9rem; color: #94a3b8;">Ваш запит на доступ знаходиться на розгляді
+                    адміністратора.</p>
+                <button onclick="location.reload()" class="auth-btn"
+                    style="margin-top: 2rem; background: #272e3a;">Check Status</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portal Section -->
+    <div id="portal-screen" style="display: none;">
+        <header>
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+                KORTEX <span>WARSPACE</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="showAlerts()" title="Notifications">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="icon-btn" onclick="showMedia()" title="Assets">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </button>
+                <button onclick="logout()" class="icon-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+                <div class="user-avatar"
+                    style="width: 32px; height: 32px; background: #272e3a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);">
+                    AD</div>
+            </div>
+        </header>
+
+        <main class="portal-container">
+            <div class="hero">
+                <div>
+                    <h1>Екосистема військових продуктів</h1>
+                </div>
+                <div class="support-info">
+                    <div id="system-health" style="display: flex; gap: 2rem; margin-right: 2rem;">
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.6rem; color: #94a3b8; text-transform: uppercase;">Node Status</div>
+                            <div style="color: #10b981; font-weight: 800; font-size: 0.8rem;">OPTIMAL</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.6rem; color: #94a3b8; text-transform: uppercase;">Sat Link</div>
+                            <div style="color: #3b82f6; font-weight: 800; font-size: 0.8rem;">ACTIVE</div>
+                        </div>
+                    </div>
+                    <button class="support-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Служба підтримки
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid-container">
+                <!-- Monitor -->
+                <div class="card active" onclick="openMonitor()">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                    </div>
+                    <div class="card-title">
+                        MONITOR
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="card-description">
+                        Національна військова система ситуаційної обізнаності за стандартами НАТО. Візуалізація поля бою
+                        в реальному часі.
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="card-footer-right">
+                            Signal бот:
+                            <div class="app-links">
+                                <svg class="app-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.23.11-2.6 1.01-4.74 1.92-2.14.91-4.51 1.81-4.64 1.88-.34.13-.34.37-.34.37s.03.24.37.37c.34.14 1.62.53 1.62.53s.47 1.48.71 2.22c.03.09.11.16.2.18.09.02.19-.01.26-.07.41-.39 1.13-1.09 1.13-1.09s1.43 1.06 2.14 1.59c.26.19.53.22.7.05.17-.17.2-.44.11-.83-.17-.79-1.12-5.32-1.31-6.19-.02-.1-.08-.18-.17-.22-.11-.04-.23-.03-.33.02z" />
+                                </svg>
+                                <span>Kortex Mobile: 🍏 🤖</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vezha -->
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <div class="card-title">
+                        VEZHA
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="card-description">
+                        Модуль оперативної взаємодії, дешифрування трансляцій та статистики польотів БпАК.
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="card-footer-right">
+                            Для пульта: 📺 <span>Вежа в Kortex Mobile: 🤖</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Element -->
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #f59e0b;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="card-title">
+                        ELEMENT
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="card-description">
+                        Єдина платформа шифрованої індивідуальної та групової комунікації у web або застосунку.
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="card-footer-right">
+                            Мобільний клієнт: 🍏 🤖
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Hub -->
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="22" y1="12" x2="18" y2="12"></line>
+                            <line x1="6" y1="12" x2="2" y2="12"></line>
+                            <line x1="12" y1="6" x2="12" y2="2"></line>
+                            <line x1="12" y1="22" x2="12" y2="18"></line>
+                        </svg>
+                    </div>
+                    <div class="card-title">
+                        TARGET HUB
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="card-description">
+                        Інструмент розробки цілей та вогневого ураження. Координація артилерії та засобів ураження.
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nextcloud -->
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #0ea5e9;">
+                            <path
+                                d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2-1.2-3.8-3.1-4.3C18.5 6.6 15.6 4 12 4c-3.2 0-6 2-7.2 4.8C2.8 9.3 1 11.2 1 13.5 1 16 3 18 5.5 18H7m10.5 1H7">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="card-title">
+                        NEXTCLOUD
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="card-description">
+                        Хмарне сховище для текстових та мультимедійних файлів. Надійна передача розвідданих.
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Monitor Fullscreen Layer -->
+    <div id="map-overlay">
+        <button class="back-to-portal" onclick="closeMonitor()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            BACK TO ECOSYSTEM
+        </button>
+
+        <!-- Left Sidebar -->
+        <div class="map-sidebar-left">
+            <button class="sidebar-btn" onclick="togglePanel('layers')" title="Шари">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="togglePanel('history')" title="Історичні стани">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="togglePanel('maps')" title="Карти">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="togglePanel('objects')" title="Список об'єктів">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="togglePanel('zones')" title="Зони спостереження">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    </path>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="togglePanel('filters')" title="Фільтри">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+            </button>
+            <div style="flex: 1;"></div>
+            <button class="sidebar-btn" onclick="toggleSettings()" title="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+            <button class="sidebar-btn btn-primary" onclick="triggerAddMarker()" title="Add Marker">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Slide Panel -->
+        <div id="side-panel" class="side-panel">
+            <div id="panel-content">
+                <!-- Content will be injected by JS -->
+            </div>
+        </div>
+
+        <!-- Right Toolbar -->
+        <div class="map-toolbar-right">
+            <div class="search-box">
+                <input type="text" id="map-search" placeholder="Знайти адресу або координати..."
+                    onkeypress="if(event.key==='Enter')handleSearch(this.value)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="toggleFullscreen()" title="Fullscreen">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="toggleFavorite()" title="Favorite Locations">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="zoom-controls">
+                <button onclick="map.zoomIn()" class="toolbar-btn">+</button>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); width: 80%;"></div>
+                <button onclick="map.zoomOut()" class="toolbar-btn">-</button>
+            </div>
+        </div>
+
+        <div id="map-controls"
+            style="position: absolute; top: 80px; left: 70px; z-index: 1001; background: rgba(21, 25, 33, 0.9); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); width: 280px; backdrop-filter: blur(10px);">
+            <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                <div
+                    style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-right: 10px; box-shadow: 0 0 10px #ef4444;">
+                </div>
+                <h3 style="font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; color: white;">TACTICAL MONITOR
+                </h3>
+                <span class="status-badge status-live">LIVE</span>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label
+                    style="display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.5rem; text-transform: uppercase;">Map
+                    Style</label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
+                        <input type="radio" name="map-style" value="dark" checked onchange="changeMapStyle('dark')">
+                        Dark OPS
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
+                        <input type="radio" name="map-style" value="topo" onchange="changeMapStyle('topo')"> Topographic
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
+                        <input type="radio" name="map-style" value="sat" onchange="changeMapStyle('sat')"> Satellite
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label
+                    style="display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.5rem; text-transform: uppercase;">Tactical
+                    Layers</label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
+                        <input type="checkbox" checked onchange="toggleLayer('enemy')"> Enemy Units
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
+                        <input type="checkbox" checked onchange="toggleLayer('ally')"> Friendly Assets
+                    </label>
+                </div>
+            </div>
+
+            <div id="admin-tools"
+                style="display: none; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                <h4 style="font-size: 0.7rem; color: #f97316; margin-bottom: 0.5rem;">COMMAND (ADMIN)</h4>
+                <div id="pending-users" style="max-height: 200px; overflow-y: auto;">
+                    <!-- List of users to approve -->
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
