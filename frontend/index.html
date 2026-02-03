@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3.3">
     <style>
         /* In-page overrides for Auth and transitions */
         .auth-overlay {
@@ -81,6 +81,25 @@
             background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
             border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* GUARANTEED HIDE FOR REGISTRATION BY DEFAULT */
+        .registration-overlay {
+            display: none !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0c10;
+            z-index: 3000;
+            overflow-y: auto;
+            padding: 2rem;
+            color: white;
+        }
+
+        .registration-overlay.active {
+            display: block !important;
         }
     </style>
 </head>
@@ -708,7 +727,7 @@
         <div id="map"></div>
     </div>
 
-    <script src="app.js?v=3.2"></script>
+    <script src="app.js?v=3.3"></script>
 </body>
 
 </html>
