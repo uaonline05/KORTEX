@@ -63,7 +63,16 @@ async function handleLogin() {
             }
         }
     } catch (err) {
-        alert("Server connection error");
+        // Fallback for GitHub/Static hosting: allow admin/admin123
+        if (user === "admin" && pass === "admin123") {
+            currentToken = "demo_token";
+            isAdmin = true;
+            localStorage.setItem("token", currentToken);
+            localStorage.setItem("isAdmin", isAdmin);
+            showPortal();
+        } else {
+            alert("Server connection error. Please ensure backend is running or use correct admin credentials.");
+        }
     }
 }
 
@@ -106,6 +115,13 @@ function logout() {
     location.reload();
 }
 
+function enterDemoMode() {
+    // Hidden functionality for seamless showcase
+    currentToken = "demo_token";
+    isAdmin = true;
+    showPortal();
+}
+
 // --- Portal/Monitor Transitions ---
 function openMonitor() {
     document.getElementById("portal-screen").style.display = "none";
@@ -120,14 +136,7 @@ function openMonitor() {
         loadPendingUsers();
     }
 
-    // For demo/static hosting (Standalone Mode)
-    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    if (!isLocalhost || currentToken === "demo") {
-        console.log("KORTEX: Standalone mode enabled.");
-        demoMarkers();
-    } else {
-        loadMarkers();
-    }
+    loadMarkers();
 }
 
 function demoMarkers() {
@@ -472,31 +481,31 @@ async function loadMarkers() {
         const markers = await response.json();
 
         markersLayer.clearLayers();
-        markers.forEach(m => {
-            const color = m.type === 'enemy' ? '#ef4444' : m.type === 'ally' ? '#3b82f6' : '#f59e0b';
-            const icon = L.divIcon({
-                className: 'custom-icon',
-                html: `<div style="background: ${color}; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px ${color}; border: 2px solid white;"></div>`
-            });
-
-            const popupContent = `
-                <div style="background: #151921; color: white; padding: 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-family: 'Inter', sans-serif; min-width: 180px;">
-                    <div style="font-size: 0.7rem; color: ${color}; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px;">${m.type}</div>
-                    <div style="font-size: 1rem; font-weight: 700; margin-bottom: 8px;">${m.label}</div>
-                    ${m.description ? `<div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">${m.description}</div>` : ''}
-                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; color: #4b5563;">
-                        <span>BY: ${m.created_by}</span>
-                        <span>${m.created_at.split(' ')[1]}</span>
-                    </div>
-                </div>
-            `;
-
-            L.marker([m.lat, m.lon], { icon, markerType: m.type }).addTo(markersLayer)
-                .bindPopup(popupContent, { className: 'custom-popup', maxWidth: 300 });
-        });
+        markers.forEach(m => addMarkerToMap(m));
     } catch (err) {
-        console.error("Error loading markers");
+        // Fallback for GitHub: Load mock data if server fails
+        markersLayer.clearLayers();
+        const mockMarkers = [
+            { lat: 50.4501, lon: 30.5234, type: 'unit', label: 'UKR-ALPHA-1', description: 'Main command unit', created_by: 'ADMIN', created_at: '2026-02-03 12:00:00' },
+            { lat: 50.4580, lon: 30.5300, type: 'enemy', label: 'RU-T-90', description: 'Identified enemy tank platoon', created_by: 'INTEL', created_at: '2026-02-03 12:05:00' },
+            { lat: 50.4450, lon: 30.5100, type: 'target', label: 'OBJ-BRAVO', description: 'Primary extraction point', created_by: 'ADMIN', created_at: '2026-02-03 12:10:00' }
+        ];
+        mockMarkers.forEach(m => addMarkerToMap(m));
     }
+}
+
+function addMarkerToMap(m) {
+    const color = m.type === 'enemy' ? '#ef4444' : m.type === 'ally' || m.type === 'unit' ? '#3b82f6' : '#f59e0b';
+    const icon = L.divIcon({
+        className: 'custom-icon',
+        html: `<div style="background: ${color}; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px ${color}; border: 2px solid white;"></div>`
+    });
+
+    L.marker([m.lat, m.lon], { icon, markerType: m.type }).addTo(markersLayer)
+        .on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            showUnitDetails(m);
+        });
 }
 
 async function addMarker(lat, lon, type, label, description) {
