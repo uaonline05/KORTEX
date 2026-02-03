@@ -31,11 +31,24 @@ function toggleAuth(isRegister) {
     document.getElementById("register-form").style.display = isRegister ? "block" : "none";
 }
 
+console.log("%c KORTEX SYSTEM READY [V2.5] ", "background: #3b82f6; color: white; font-weight: bold;");
+
 async function handleLogin() {
     const user = document.getElementById("username").value;
     const pass = document.getElementById("password").value;
 
     if (!user || !pass) return alert("Please fill all fields");
+
+    // NEW: Instant bypass for ADMIN
+    if (user === "admin" && pass === "admin123") {
+        console.log("KORTEX: Admin credentials verified locally.");
+        currentToken = "demo_token";
+        isAdmin = true;
+        localStorage.setItem("token", currentToken);
+        localStorage.setItem("isAdmin", isAdmin);
+        showPortal();
+        return;
+    }
 
     const formData = new FormData();
     formData.append("username", user);
@@ -63,16 +76,7 @@ async function handleLogin() {
             }
         }
     } catch (err) {
-        // Fallback for GitHub/Static hosting: allow admin/admin123
-        if (user === "admin" && pass === "admin123") {
-            currentToken = "demo_token";
-            isAdmin = true;
-            localStorage.setItem("token", currentToken);
-            localStorage.setItem("isAdmin", isAdmin);
-            showPortal();
-        } else {
-            alert("Server connection error. Please ensure backend is running or use correct admin credentials.");
-        }
+        alert("Server connection error. Please ensure backend is running or use correct admin credentials.");
     }
 }
 
