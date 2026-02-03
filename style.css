@@ -15,6 +15,13 @@
     font-family: 'Inter', sans-serif;
 }
 
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    position: relative;
+}
+
 /* Intelligence Feed */
 .intel-feed {
     position: fixed;

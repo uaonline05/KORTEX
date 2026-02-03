@@ -31,21 +31,21 @@ function toggleAuth(isRegister) {
     document.getElementById("register-form").style.display = isRegister ? "block" : "none";
 }
 
-console.log("%c KORTEX SYSTEM READY [V2.5] ", "background: #3b82f6; color: white; font-weight: bold;");
+console.log("%c KORTEX SYSTEM READY [V3.1] ", "background: #22c55e; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
 
 async function handleLogin() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
+    const user = document.getElementById("username").value.trim().toLowerCase();
+    const pass = document.getElementById("password").value.trim();
 
     if (!user || !pass) return alert("Please fill all fields");
 
-    // NEW: Instant bypass for ADMIN
+    // NEW (V3.0): Triple-checked Admin Bypass
     if (user === "admin" && pass === "admin123") {
-        console.log("KORTEX: Admin credentials verified locally.");
+        console.log("KORTEX: Local Authorization Success.");
         currentToken = "demo_token";
         isAdmin = true;
-        localStorage.setItem("token", currentToken);
-        localStorage.setItem("isAdmin", isAdmin);
+        localStorage.setItem("token", "demo_token");
+        localStorage.setItem("isAdmin", "true");
         showPortal();
         return;
     }
