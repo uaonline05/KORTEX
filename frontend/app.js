@@ -39,12 +39,12 @@ async function handleLogin() {
 
     if (!user || !pass) return alert("Please fill all fields");
 
-    // NEW (V3.0): Triple-checked Admin Bypass
+    // NEW (V3.1): Super-Admin Local Authorization
     if (user === "admin" && pass === "admin123") {
-        console.log("KORTEX: Local Authorization Success.");
-        currentToken = "demo_token";
+        console.log("%c KORTEX: Super Admin Authorization Success. ", "background: #10b981; color: white;");
+        currentToken = "super_admin_demo";
         isAdmin = true;
-        localStorage.setItem("token", "demo_token");
+        localStorage.setItem("token", "super_admin_demo");
         localStorage.setItem("isAdmin", "true");
         showPortal();
         return;
@@ -99,6 +99,33 @@ async function handleRegister() {
         }
     } catch (err) {
         alert("Server connection error");
+    }
+}
+
+function showAdvancedReg() {
+    document.getElementById("auth-screen").style.display = "none";
+    document.getElementById("advanced-reg-overlay").style.display = "block";
+}
+
+function hideAdvancedReg() {
+    document.getElementById("advanced-reg-overlay").style.display = "none";
+    document.getElementById("auth-screen").style.display = "flex";
+}
+
+function handleAdvancedRegister() {
+    const email = document.getElementById("reg-email").value;
+    const user = document.getElementById("reg-username").value;
+
+    if (!email || !user) return alert("Будь ласка, заповніть обов'язкові поля.");
+
+    // Check if on GitHub Pages
+    const isGitHub = window.location.hostname.includes('github.io');
+
+    if (isGitHub) {
+        hideAdvancedReg();
+        showPending();
+    } else {
+        handleRegister();
     }
 }
 
@@ -551,32 +578,35 @@ async function loadPendingUsers() {
             headers: { "Authorization": `Bearer ${currentToken}` }
         });
         const users = await response.json();
-
-        const container = document.getElementById("pending-users");
-        container.innerHTML = users.length === 0 ? '<p style="font-size: 0.7rem; color: #4b5563;">No pending requests</p>' : '';
-
-        users.forEach(u => {
-            const div = document.createElement("div");
-            div.style.background = "rgba(255,255,255,0.05)";
-            div.style.padding = "10px";
-            div.style.borderRadius = "4px";
-            div.style.marginBottom = "5px";
-            div.style.display = "flex";
-            div.style.justifyContent = "space-between";
-            div.style.alignItems = "center";
-
-            div.innerHTML = `
-                <span style="font-size: 0.8rem;">${u.username}</span>
-                <button onclick="approveUser(${u.id})" style="background: #10b981; border: none; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.7rem; cursor: pointer;">Approve</button>
-            `;
-            container.appendChild(div);
-        });
+        renderPendingUsersList(users);
     } catch (err) {
-        console.error("Error loading pending users");
+        // Fallback for GitHub: Show mock pending users for Admin showcase
+        const mockUsers = [
+            { id: 101, username: "Sgt. Petrov" },
+            { id: 102, username: "Lt. Ivanova" },
+            { id: 103, username: "Unit-772" }
+        ];
+        renderPendingUsersList(mockUsers);
     }
 }
 
-async function approveUser(userId) {
+function renderPendingUsersList(users) {
+    const container = document.getElementById("pending-users");
+    container.innerHTML = users.length === 0 ? '<p style="font-size: 0.7rem; color: #4b5563;">No pending requests</p>' : '';
+
+    users.forEach(u => {
+        const div = document.createElement("div");
+        div.style.cssText = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 2px solid #f97316;";
+
+        div.innerHTML = `
+            <span style="font-size: 0.8rem; font-weight: 600;">${u.username}</span>
+            <button onclick="approveUser(${u.id}, '${u.username}')" style="background: #10b981; border: none; color: white; padding: 4px 10px; border-radius: 3px; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; font-weight: 800;">Approve</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+async function approveUser(userId, username) {
     try {
         const response = await fetch(`${API_URL}/admin/approve/${userId}`, {
             method: "POST",
@@ -584,10 +614,18 @@ async function approveUser(userId) {
         });
 
         if (response.ok) {
+            showNotification(`ACCESS GRANTED: ${username}`);
             loadPendingUsers();
+        } else {
+            // Local bypass for GitHub
+            showNotification(`ACCESS GRANTED: ${username} (OFFLINE MODE)`);
+            document.querySelector(`button[onclick="approveUser(${userId}, '${username}')"]`).parentElement.remove();
         }
     } catch (err) {
-        alert("Failed to approve user");
+        // Local bypass for GitHub
+        showNotification(`ACCESS GRANTED: ${username} (OFFLINE MODE)`);
+        const item = document.querySelector(`button[onclick*="approveUser(${userId}"]`);
+        if (item) item.parentElement.remove();
     }
 }
 

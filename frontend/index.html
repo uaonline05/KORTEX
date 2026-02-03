@@ -103,16 +103,8 @@
                 <input type="password" id="password" class="auth-input" placeholder="Encryption Key (Пароль)">
                 <button onclick="handleLogin()" class="auth-btn">Initialize Connection</button>
                 <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #94a3b8;">
-                    Немає доступу? <a href="#" onclick="toggleAuth(true)" style="color: var(--accent-blue);">Request
+                    Немає доступу? <a href="#" onclick="showAdvancedReg()" style="color: var(--accent-blue);">Request
                         Access</a>
-                </p>
-            </div>
-            <div id="register-form" style="display: none;">
-                <input type="text" id="reg-username" class="auth-input" placeholder="New Callsign">
-                <input type="password" id="reg-password" class="auth-input" placeholder="New Encryption Key">
-                <button onclick="handleRegister()" class="auth-btn">Request Access</button>
-                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #94a3b8;">
-                    Вже є аккаунт? <a href="#" onclick="toggleAuth(false)" style="color: var(--accent-blue);">Login</a>
                 </p>
             </div>
             <div id="pending-msg" style="display: none; padding: 2rem 0;">
@@ -125,7 +117,156 @@
         </div>
     </div>
 
-    <!-- Portal Section -->
+    <!-- Advanced Registration Overlay -->
+    <div id="advanced-reg-overlay" class="registration-overlay">
+        <div class="registration-container">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Заповніть анкету</h1>
+                    <p style="font-size: 0.8rem; color: #64748b;">Будь ласка, вказуйте актуальні дані згідно документів.
+                    </p>
+                </div>
+                <p style="font-size: 0.75rem; color: #94a3b8;">Вже зареєструвались? <a href="#"
+                        onclick="hideAdvancedReg()" style="color: var(--accent-blue);">Логін</a></p>
+            </div>
+
+            <div class="reg-section">
+                <h2 class="reg-section-title">Персональні дані</h2>
+                <div class="reg-grid">
+                    <div class="reg-group">
+                        <label class="reg-label">Прізвище <span>*</span></label>
+                        <input type="text" class="reg-input" placeholder="Приклад: Франко">
+                        <p class="reg-hint">Ваше актуальне прізвище, яке зазначене у всіх документах.</p>
+                    </div>
+                    <div class="reg-group">
+                        <label class="reg-label">Ім'я <span>*</span></label>
+                        <input type="text" class="reg-input" placeholder="Приклад: Іван">
+                    </div>
+                    <div class="reg-group">
+                        <label class="reg-label">По батькові <span>*</span></label>
+                        <input type="text" class="reg-input" placeholder="Приклад: Якович">
+                    </div>
+                </div>
+            </div>
+
+            <div class="reg-section">
+                <h2 class="reg-section-title">Контактні дані</h2>
+                <div class="reg-grid">
+                    <div class="reg-group">
+                        <label class="reg-label">Мобільний телефон ( Signal/WhatsApp ) <span>*</span></label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="reg-input" style="width: 40px; text-align: center;" value="🇺🇦"
+                                readonly>
+                            <input type="text" class="reg-input" style="flex: 1;" placeholder="+380 (__) ___-__-__">
+                        </div>
+                        <p class="reg-hint">Персональный номер телефону яким Ви користуєтесь і на якому встановлено
+                            мессенджер.</p>
+                    </div>
+                    <div class="reg-group">
+                        <label class="reg-label">Додатковий контактний телефон</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" class="reg-input" style="width: 40px; text-align: center;" value="🇺🇦"
+                                readonly>
+                            <input type="text" class="reg-input" style="flex: 1;" placeholder="+380 (__) ___-__-__">
+                        </div>
+                    </div>
+                    <div class="reg-group" style="grid-column: span 2;">
+                        <label class="reg-label">Електронна пошта <span>*</span></label>
+                        <input type="email" id="reg-email" class="reg-input" placeholder="Приклад: ivan.franko@ukr.net">
+                        <p class="reg-hint">Буде використана для підтвердження заявки та подальшої комунікації.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reg-section">
+                <h2 class="reg-section-title">Службові дані</h2>
+                <div class="reg-grid">
+                    <div class="reg-group">
+                        <label class="reg-label">Підрозділ <span>*</span></label>
+                        <input type="text" class="reg-input" placeholder="Приклад: А0000, 424 ОМБр">
+                        <p class="reg-hint">Вкажіть номер та назву Вашої в/ч, батальйону, бригади.</p>
+                    </div>
+                    <div class="reg-group">
+                        <label class="reg-label">Посада <span>*</span></label>
+                        <input type="text" class="reg-input" placeholder="Приклад: начальник зв'язку">
+                    </div>
+                    <div class="reg-group" style="grid-column: span 2;">
+                        <label class="reg-label">Поручитель або № документа <span>*</span></label>
+                        <input type="text" class="reg-input" placeholder="Приклад: deltauser, або Лист №1234567890">
+                        <p class="reg-hint">Вкажіть DELTA логін поручителя, який підтвердить Вашу особу.</p>
+                    </div>
+                    <div class="reg-group" style="grid-column: span 2;">
+                        <label class="reg-label">Додаткова інформація</label>
+                        <textarea class="reg-input" style="min-height: 100px; resize: vertical;"
+                            placeholder="Вкажіть додаткові відомості..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reg-section">
+                <h2 class="reg-section-title">Документи, що підтверджують особистість</h2>
+                <p class="reg-hint" style="margin-bottom: 1.5rem;">Фото мають бути достатньої якості, щоб можна було
+                    прочитати текст. Документ повинен бути повністю видимим.</p>
+                <div class="reg-grid">
+                    <div class="doc-sample">
+                        <p class="reg-label" style="text-align: left; width: 100%;">1. Ви та військовий квиток у
+                            розвороті <span>*</span></p>
+                        <button class="upload-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                            </svg> Обрати файл</button>
+                    </div>
+                    <div class="doc-sample">
+                        <p class="reg-label" style="text-align: left; width: 100%;">2. Перша сторінка із серії і номеру
+                            <span>*</span></p>
+                        <button class="upload-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                            </svg> Обрати файл</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reg-section">
+                <h2 class="reg-section-title">Системні дані</h2>
+                <div class="reg-grid">
+                    <div class="reg-group" style="grid-column: span 2;">
+                        <label class="reg-label">Логін <span>*</span></label>
+                        <input type="text" id="reg-username" class="reg-input" placeholder="Вигадайте логін">
+                        <p class="reg-hint">Це унікальне ім'я Вашого облікового запису KORTEX.</p>
+                    </div>
+                    <div class="reg-group">
+                        <label class="reg-label">Пароль <span>*</span></label>
+                        <input type="password" id="reg-password" class="reg-input">
+                    </div>
+                    <div class="reg-group">
+                        <label class="reg-label">Підтвердити пароль <span>*</span></label>
+                        <input type="password" class="reg-input">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <div class="reg-checkbox-group">
+                    <input type="checkbox">
+                    <p class="reg-checkbox-label">Даю згоду на обробку моїх персональних данных в обсязі та на умовах,
+                        зазначених у Повідомленні про обробку персональних данных <span>*</span></p>
+                </div>
+                <div class="reg-checkbox-group">
+                    <input type="checkbox">
+                    <p class="reg-checkbox-label">Я прочитав(ла) та погоджуюсь із правилами безпеки при використанні
+                        системи та користувацькою угодою <span>*</span></p>
+                </div>
+            </div>
+
+            <div class="reg-footer">
+                <button onclick="hideAdvancedReg()" class="auth-btn"
+                    style="background: #272e3a; width: auto; padding: 0.8rem 2rem;">Скасувати</button>
+                <button onclick="handleAdvancedRegister()" class="auth-btn"
+                    style="width: auto; padding: 0.8rem 2.5rem;">Зареєструватися</button>
+            </div>
+        </div>
+    </div>
     <div id="portal-screen" style="display: none;">
         <header>
             <div class="logo">
