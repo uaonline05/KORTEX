@@ -1,11 +1,14 @@
-:root {
-    --bg-dark: #0a0c10;
-    --bg-card: #151921;
+﻿:root {
+    --bg-dark: #06080a;
+    --bg-card: #0d1117;
     --accent-blue: #3b82f6;
     --accent-cyan: #22d3ee;
-    --text-primary: #ffffff;
+    --accent-red: #ef4444;
+    --accent-green: #10b981;
+    --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
-    --border-color: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --glass: rgba(13, 17, 23, 0.7);
 }
 
 * {
@@ -56,10 +59,27 @@ body {
     animation: scrollFeed 40s linear infinite;
 }
 
+/* Scanline effect for tactical monitors */
+body::after {
+    content: " ";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+    z-index: 9999;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
 .intel-item {
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    color: #94a3b8;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 
@@ -355,51 +375,90 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem 2.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(10, 12, 16, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
     font-weight: 800;
-    letter-spacing: 2px;
-    font-size: 1.2rem;
+    letter-spacing: 3px;
+    font-size: 1.4rem;
+    color: white;
 }
 
 .logo span {
-    color: var(--text-secondary);
+    color: #94a3b8;
     font-weight: 400;
+    margin-left: 0.5rem;
 }
 
 .header-actions {
     display: flex;
-    gap: 1.5rem;
+    gap: 2.5rem;
     align-items: center;
 }
 
 .icon-btn {
     background: none;
     border: none;
-    color: var(--text-secondary);
+    color: #94a3b8;
     cursor: pointer;
     position: relative;
-    transition: color 0.3s;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icon-btn:hover {
     color: white;
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
 }
 
 .notification-dot {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 6px;
-    height: 6px;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
     background: #ef4444;
     border-radius: 50%;
+    border: 2px solid #151921;
+    box-shadow: 0 0 10px #ef4444;
+}
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.user-avatar:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
 }
 
 .hero {
@@ -546,77 +605,163 @@ header {
 }
 
 /* Map Overlay Styles */
+/* --- TACTICAL MONITOR CONCEPT --- */
 #map-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    background: var(--bg-dark);
+    inset: 0;
+    z-index: 2100;
+    background: #06080a;
     display: none;
-    flex-direction: column;
+    flex-direction: row;
 }
 
-.back-to-portal {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 1001;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 0.8rem 1.2rem;
-    border-radius: 8px;
-    cursor: pointer;
+.map-sidebar-left {
+    width: 64px;
+    background: rgba(10, 12, 16, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
+    padding: 1.5rem 0;
+    gap: 1.5rem;
+    z-index: 1010;
+    backdrop-filter: blur(20px);
+}
+
+.map-main-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 #map {
-    width: 100%;
     flex: 1;
+    width: 100%;
 }
 
-/* Map Sidebar & Toolbars */
-.map-sidebar-left {
+.map-system-header {
+    height: 60px;
+    background: rgba(13, 17, 23, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    justify-content: space-between;
+    z-index: 1005;
+}
+
+.system-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #94a3b8;
+}
+
+.system-title span {
+    color: #3b82f6;
+    margin-right: 8px;
+}
+
+.back-to-portal {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+
+.back-to-portal:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Floating Panels */
+.floating-panels-container {
     position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 60px;
-    background: rgba(10, 12, 16, 0.85);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    top: 80px;
+    /* Offset for header (60px) + gap (20px) */
+    left: 20px;
     z-index: 1002;
     display: flex;
     flex-direction: column;
-    padding: 1rem 0;
+    gap: 1.5rem;
+    width: 320px;
+    pointer-events: none;
+}
+
+.floating-panels-container>* {
+    pointer-events: auto;
+}
+
+.tactical-card {
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    display: none;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
-    backdrop-filter: blur(15px);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-header span {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.tactical-card.active {
+    display: block;
+    animation: cardIn 0.3s ease-out;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .sidebar-btn {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border: 1px solid transparent;
+    border-radius: 8px;
     background: none;
-    color: #94a3b8;
-    border-radius: 4px;
+    color: #475569;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
 }
 
-.sidebar-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.1);
+.sidebar-btn:hover,
+.sidebar-btn.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 .sidebar-btn.btn-primary {
@@ -893,4 +1038,198 @@ header {
     .support-text {
         text-align: left;
     }
+}
+
+/* --- ENHANCED SYSTEM MODAL --- */
+.registration-overlay {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.registration-overlay.active {
+    display: flex;
+}
+
+.registration-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.1);
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.registration-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+}
+
+.modal-header-tactical {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header-tactical h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.modal-header-tactical h2::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--accent-blue);
+    box-shadow: 0 0 10px var(--accent-blue);
+}
+
+.modal-body-tactical {
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Tactical Elements */
+.tactical-media-card {
+    background: #090c10;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tactical-media-card:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-5px);
+}
+
+.chat-history {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+}
+
+.chat-timestamp {
+    color: #475569;
+}
+
+.chat-sender {
+    color: var(--accent-blue);
+    font-weight: 700;
+}
+
+.chat-sender.hq {
+    color: var(--accent-red);
+}
+
+.map-style-opt {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.7rem;
+    color: var(--text-primary);
+}
+
+.map-style-opt:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--accent-blue);
+}
+
+.map-preview {
+    width: 48px;
+    height: 32px;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.map-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.style-help {
+    width: 18px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.style-help:hover {
+    background: var(--accent-blue);
+    color: white;
+}
+
+/* Custom Scrollbar for Tactical Cards */
+#card-map-styles::-webkit-scrollbar {
+    width: 4px;
+}
+
+#card-map-styles::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#card-map-styles::-webkit-scrollbar-thumb {
+    background: var(--accent-blue);
+    border-radius: 10px;
+}
+
+/* Map Style Filters */
+.map-geoint {
+    filter: contrast(1.4) brightness(1.1) saturate(1.1) !important;
+}
+
+.map-planet {
+    filter: saturate(1.8) brightness(1.05) contrast(1.1) !important;
+}
+
+.map-visicom {
+    filter: hue-rotate(-10deg) saturate(0.8) !important;
+}
+
+.map-staff-service {
+    filter: grayscale(0.2) contrast(1.1) sepia(0.1) !important;
+}
+
+.map-staff-old {
+    filter: grayscale(1) sepia(0.4) contrast(0.95) !important;
+}
+
+.map-maritime {
+    filter: hue-rotate(15deg) saturate(1.2) brightness(0.9) !important;
+}
+
+.map-dark-topo {
+    filter: invert(100%) hue-rotate(180deg) brightness(0.4) contrast(1.5) !important;
 }

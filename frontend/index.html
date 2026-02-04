@@ -12,90 +12,174 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=3.3">
+    <link rel="stylesheet" href="style.css?v=3.7">
     <style>
-        /* In-page overrides for Auth and transitions */
+        /* DELTA AUTH REDESIGN */
         .auth-overlay {
             position: fixed;
             inset: 0;
             z-index: 2000;
-            background: #0a0c10;
+            background: #11151d;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            grid-template-rows: 1fr 140px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .auth-center-area {
+            grid-row: 1;
+            grid-column: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding-left: 340px;
+            /* Symmetry balance */
+        }
+
+        .delta-logo-wrap {
+            margin-bottom: 3.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 4px;
+            font-weight: 900;
         }
 
         .auth-card {
-            background: #151921;
-            padding: 3rem;
-            border-radius: 8px;
             width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-width: 380px;
+            background: transparent;
             text-align: center;
         }
 
         .auth-input {
             width: 100%;
-            background: #0a0c10;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #d1d5db;
+            padding: 0.9rem 1rem;
+            margin-bottom: 0.5rem;
             border-radius: 4px;
+            font-size: 0.85rem;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.2s;
         }
 
         .auth-input:focus {
-            border-color: var(--accent-blue);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #3b82f6;
         }
 
         .auth-btn {
             width: 100%;
-            background: var(--accent-blue);
+            background: #3b82f6;
             color: white;
             border: none;
-            padding: 1rem;
+            padding: 0.9rem;
             border-radius: 4px;
-            font-weight: 700;
+            font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-top: 1rem;
+            transition: background 0.2s;
         }
 
         .auth-btn:hover {
             background: #2563eb;
         }
 
-        .status-badge {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: 800;
-            margin-left: 8px;
+        .auth-extra-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.25rem;
+            font-size: 0.75rem;
+            color: #60a5fa;
         }
 
-        .status-live {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+        .auth-extra-links span {
+            cursor: pointer;
         }
 
-        /* GUARANTEED HIDE FOR REGISTRATION BY DEFAULT */
+        .auth-rules-sidebar {
+            grid-row: 1 / 3;
+            grid-column: 2;
+            padding: 80px 45px;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            line-height: 1.7;
+            background: rgba(0, 0, 0, 0.15);
+            border-left: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .auth-rules-sidebar p {
+            margin-bottom: 2.5rem;
+            color: white;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .auth-rules-sidebar ol {
+            padding-left: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.8rem;
+        }
+
+        .auth-footer {
+            grid-row: 2;
+            grid-column: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 80px;
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+
+        .footer-support {
+            display: flex;
+            gap: 40px;
+            text-align: right;
+        }
+
+        .support-col span {
+            display: block;
+            margin-bottom: 2px;
+            color: #64748b;
+        }
+
+        .support-col strong {
+            color: #94a3b8;
+        }
+
+        .lang-switcher {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            font-size: 0.75rem;
+            color: #64748b;
+            display: flex;
+            gap: 12px;
+            font-weight: bold;
+            z-index: 2010;
+        }
+
+        .lang-switcher span.active {
+            color: white;
+        }
+
+        /* Registration stays hidden by default */
         .registration-overlay {
             display: none !important;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: #0a0c10;
             z-index: 3000;
             overflow-y: auto;
             padding: 2rem;
-            color: white;
         }
 
         .registration-overlay.active {
@@ -107,33 +191,88 @@
 <body class="bg-[#0a0c10] text-white">
     <div class="scanline"></div>
 
-    <!-- Auth Section -->
+    <!-- Auth Section (DELTA THEME) -->
     <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
-            <div class="logo" style="justify-content: center; margin-bottom: 2rem;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+        <div class="lang-switcher">
+            <span>EN</span>
+            <span class="active">УКР</span>
+        </div>
+
+        <div class="auth-center-area">
+            <div class="delta-logo-wrap">
+                <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M32 4L32 60M12 30L52 30" stroke-linecap="round" />
+                    <circle cx="32" cy="30" r="12" />
+                    <circle cx="32" cy="30" r="22" opacity="0.3" />
+                    <path d="M22 15L32 4L42 15" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                KORTEX <span>WARSPACE</span>
+                <span style="font-size: 2.2rem; font-weight: 900; letter-spacing: 6px;">DELTA</span>
             </div>
-            <div id="login-form">
-                <input type="text" id="username" class="auth-input" placeholder="Callsign (Логін)">
-                <input type="password" id="password" class="auth-input" placeholder="Encryption Key (Пароль)">
-                <button onclick="handleLogin()" class="auth-btn">Initialize Connection</button>
-                <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #94a3b8;">
-                    Немає доступу? <a href="#" onclick="showAdvancedReg()" style="color: var(--accent-blue);">Request
-                        Access</a>
-                </p>
-            </div>
-            <div id="pending-msg" style="display: none; padding: 2rem 0;">
-                <h3 style="color: #f97316; margin-bottom: 1rem;">ACCESS PENDING</h3>
-                <p style="font-size: 0.9rem; color: #94a3b8;">Ваш запит на доступ знаходиться на розгляді
-                    адміністратора.</p>
-                <button onclick="location.reload()" class="auth-btn"
-                    style="margin-top: 2rem; background: #272e3a;">Check Status</button>
+
+            <div class="auth-card">
+                <div id="login-form">
+                    <input type="text" id="username" class="auth-input" placeholder="Логін">
+                    <div style="position: relative;">
+                        <input type="password" id="password" class="auth-input" placeholder="Пароль">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"
+                            style="position: absolute; right: 12px; top: 12px; cursor: pointer;">
+                            <path
+                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                            </path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                    </div>
+                    <button onclick="handleLogin()" class="auth-btn">Вхід у систему</button>
+                    <div class="auth-extra-links">
+                        <span onclick="showAdvancedReg()">Реєстрація ⌵</span>
+                        <span>Забули пароль?</span>
+                    </div>
+                </div>
+
+                <div id="pending-msg" style="display: none; padding: 2rem 0; color: #f97316;">
+                    <h3 style="margin-bottom: 1rem; font-weight: 800; letter-spacing: 2px;">ACCESS PENDING</h3>
+                    <p style="font-size: 0.8rem; color: #94a3b8;">Ваш запит на доступ знаходиться на розгляді
+                        адміністратора.</p>
+                    <button onclick="location.reload()" class="auth-btn"
+                        style="margin-top: 2rem; background: #272e3a;">Check Status</button>
+                </div>
             </div>
         </div>
+
+        <div class="auth-rules-sidebar">
+            <p>Здійснюючи вхід у систему, Ви підтверджуєте наступне:</p>
+            <ol>
+                <li>Ви усвідомлюєте, що здійснюєте доступ до урядової системи, власником якої є Міністерство оборони
+                    України;</li>
+                <li>Використання системи може контролюватися, реєструватися та підлягати аудиту;</li>
+                <li>Несанкціоноване використання системи забороняється та несе за собою кримінальну, дисциплінарну,
+                    адміністративну та цивільну відповідальність;</li>
+                <li>Факт використання системи вважається наданою згодою на моніторинг і запис Ваших дій у системі.</li>
+            </ol>
+        </div>
+
+        <footer class="auth-footer">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="#ef4444">
+                    <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
+                </svg>
+                <div style="max-width: 200px; line-height: 1.3;">
+                    Система розробляється та підтримується «Центром інновацій та розвитку оборонних технологій»
+                    Міністерства оборони України
+                </div>
+            </div>
+
+            <div class="footer-support">
+                <div class="support-col">
+                    <span>Element:</span>
+                    <strong>@delta_support:delta.mil.gov.ua</strong>
+                </div>
+                <div class="support-col">
+                    <span>E-mail:</span>
+                    <strong>support@delta.mil.gov.ua</strong>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <!-- Advanced Registration Overlay -->
@@ -154,16 +293,16 @@
                 <div class="reg-grid">
                     <div class="reg-group">
                         <label class="reg-label">Прізвище <span>*</span></label>
-                        <input type="text" class="reg-input" placeholder="Приклад: Франко">
+                        <input type="text" id="reg-lastname" class="reg-input" placeholder="Приклад: Франко">
                         <p class="reg-hint">Ваше актуальне прізвище, яке зазначене у всіх документах.</p>
                     </div>
                     <div class="reg-group">
                         <label class="reg-label">Ім'я <span>*</span></label>
-                        <input type="text" class="reg-input" placeholder="Приклад: Іван">
+                        <input type="text" id="reg-firstname" class="reg-input" placeholder="Приклад: Іван">
                     </div>
                     <div class="reg-group">
                         <label class="reg-label">По батькові <span>*</span></label>
-                        <input type="text" class="reg-input" placeholder="Приклад: Якович">
+                        <input type="text" id="reg-middlename" class="reg-input" placeholder="Приклад: Якович">
                     </div>
                 </div>
             </div>
@@ -176,9 +315,10 @@
                         <div style="display: flex; gap: 10px;">
                             <input type="text" class="reg-input" style="width: 40px; text-align: center;" value="🇺🇦"
                                 readonly>
-                            <input type="text" class="reg-input" style="flex: 1;" placeholder="+380 (__) ___-__-__">
+                            <input type="text" id="reg-phone" class="reg-input" style="flex: 1;"
+                                placeholder="+380 (__) ___-__-__">
                         </div>
-                        <p class="reg-hint">Персональный номер телефону яким Ви користуєтесь і на якому встановлено
+                        <p class="reg-hint">Персональний номер телефону яким Ви користуєтесь і на якому встановлено
                             мессенджер.</p>
                     </div>
                     <div class="reg-group">
@@ -186,7 +326,8 @@
                         <div style="display: flex; gap: 10px;">
                             <input type="text" class="reg-input" style="width: 40px; text-align: center;" value="🇺🇦"
                                 readonly>
-                            <input type="text" class="reg-input" style="flex: 1;" placeholder="+380 (__) ___-__-__">
+                            <input type="text" id="reg-phone-extra" class="reg-input" style="flex: 1;"
+                                placeholder="+380 (__) ___-__-__">
                         </div>
                     </div>
                     <div class="reg-group" style="grid-column: span 2;">
@@ -202,21 +343,22 @@
                 <div class="reg-grid">
                     <div class="reg-group">
                         <label class="reg-label">Підрозділ <span>*</span></label>
-                        <input type="text" class="reg-input" placeholder="Приклад: А0000, 424 ОМБр">
+                        <input type="text" id="reg-unit" class="reg-input" placeholder="Приклад: А0000, 424 ОМБр">
                         <p class="reg-hint">Вкажіть номер та назву Вашої в/ч, батальйону, бригади.</p>
                     </div>
                     <div class="reg-group">
                         <label class="reg-label">Посада <span>*</span></label>
-                        <input type="text" class="reg-input" placeholder="Приклад: начальник зв'язку">
+                        <input type="text" id="reg-position" class="reg-input" placeholder="Приклад: начальник зв'язку">
                     </div>
                     <div class="reg-group" style="grid-column: span 2;">
                         <label class="reg-label">Поручитель або № документа <span>*</span></label>
-                        <input type="text" class="reg-input" placeholder="Приклад: deltauser, або Лист №1234567890">
+                        <input type="text" id="reg-guarantor" class="reg-input"
+                            placeholder="Приклад: deltauser, або Лист №1234567890">
                         <p class="reg-hint">Вкажіть DELTA логін поручителя, який підтвердить Вашу особу.</p>
                     </div>
                     <div class="reg-group" style="grid-column: span 2;">
                         <label class="reg-label">Додаткова інформація</label>
-                        <textarea class="reg-input" style="min-height: 100px; resize: vertical;"
+                        <textarea id="reg-info" class="reg-input" style="min-height: 100px; resize: vertical;"
                             placeholder="Вкажіть додаткові відомості..."></textarea>
                     </div>
                 </div>
@@ -230,19 +372,31 @@
                     <div class="doc-sample">
                         <p class="reg-label" style="text-align: left; width: 100%;">1. Ви та військовий квиток у
                             розвороті <span>*</span></p>
-                        <button class="upload-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                        <label class="upload-button" style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                            </svg> Обрати файл</button>
+                            </svg>
+                            <span>Обрати файл</span>
+                            <input type="file" id="doc-military" style="display: none;"
+                                onchange="handleFileSelect(this, 'military-preview')">
+                        </label>
+                        <div id="military-preview" style="font-size: 0.65rem; color: #10b981; margin-top: 5px;"></div>
                     </div>
                     <div class="doc-sample">
                         <p class="reg-label" style="text-align: left; width: 100%;">2. Перша сторінка із серії і номеру
                             <span>*</span>
                         </p>
-                        <button class="upload-button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                        <label class="upload-button" style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                            </svg> Обрати файл</button>
+                            </svg>
+                            <span>Обрати файл</span>
+                            <input type="file" id="doc-passport" style="display: none;"
+                                onchange="handleFileSelect(this, 'passport-preview')">
+                        </label>
+                        <div id="passport-preview" style="font-size: 0.65rem; color: #10b981; margin-top: 5px;"></div>
                     </div>
                 </div>
             </div>
@@ -290,7 +444,7 @@
     <div id="portal-screen" style="display: none;">
         <header>
             <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6;">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                 </svg>
@@ -298,7 +452,7 @@
             </div>
             <div class="header-actions">
                 <button class="icon-btn" onclick="showAlerts()" title="Notifications">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -306,7 +460,7 @@
                     <span class="notification-dot"></span>
                 </button>
                 <button class="icon-btn" onclick="showMedia()" title="Assets">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path
                             d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -315,17 +469,28 @@
                         <line x1="12" y1="22.08" x2="12" y2="12"></line>
                     </svg>
                 </button>
-                <button onclick="logout()" class="icon-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
+                <button onclick="showProfile()" class="icon-btn" title="User Profile">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </button>
+                <button id="header-admin-tools" onclick="showAdminTools()" class="icon-btn" title="Admin Tools"
+                    style="display: none;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+                        </path>
+                    </svg>
+                </button>
+                <button onclick="logout()" class="icon-btn" title="Logout">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
                 </button>
-                <div class="user-avatar"
-                    style="width: 32px; height: 32px; background: #272e3a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);">
-                    AD</div>
+                <div class="user-avatar" onclick="showProfile()" style="cursor: pointer;">AD</div>
             </div>
         </header>
 
@@ -400,7 +565,7 @@
                 </div>
 
                 <!-- Vezha -->
-                <div class="card">
+                <div class="card" onclick="openApp('VEZHA')">
                     <div class="card-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;">
@@ -433,7 +598,7 @@
                 </div>
 
                 <!-- Element -->
-                <div class="card">
+                <div class="card" onclick="openApp('ELEMENT')">
                     <div class="card-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #f59e0b;">
@@ -466,7 +631,7 @@
                 </div>
 
                 <!-- Target Hub -->
-                <div class="card">
+                <div class="card" onclick="openApp('TARGET_HUB')">
                     <div class="card-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;">
@@ -500,7 +665,7 @@
                 </div>
 
                 <!-- Nextcloud -->
-                <div class="card">
+                <div class="card" onclick="openApp('NEXTCLOUD')">
                     <div class="card-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #0ea5e9;">
@@ -535,199 +700,311 @@
     </div>
 
     <!-- Monitor Fullscreen Layer -->
+    <!-- Monitor Fullscreen Layer - CONCEPT V2 -->
     <div id="map-overlay">
-        <button class="back-to-portal" onclick="closeMonitor()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            BACK TO ECOSYSTEM
-        </button>
-
-        <!-- Left Sidebar -->
+        <!-- Vertical Sidebar -->
         <div class="map-sidebar-left">
-            <button class="sidebar-btn" onclick="togglePanel('layers')" title="Шари">
+            <div class="sidebar-logo" style="margin-bottom: 2rem; color: #3b82f6;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                </svg>
+            </div>
+            <button class="sidebar-btn active" onclick="toggleTacticalCard('active-units')" title="Active Units">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
             </button>
-            <button class="sidebar-btn" onclick="togglePanel('history')" title="Історичні стани">
+            <button class="sidebar-btn" onclick="toggleTacticalCard('personnel-status')" title="Personnel Status">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="toggleTacticalCard('map-layers')" title="Map Layers">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </button>
+            <button class="sidebar-btn" onclick="toggleTacticalCard('map-styles')" title="Map Styles">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-            </button>
-            <button class="sidebar-btn" onclick="togglePanel('maps')" title="Карти">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-            </button>
-            <button class="sidebar-btn" onclick="togglePanel('objects')" title="Список об'єктів">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="8" y1="6" x2="21" y2="6"></line>
-                    <line x1="8" y1="12" x2="21" y2="12"></line>
-                    <line x1="8" y1="18" x2="21" y2="18"></line>
-                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                </svg>
-            </button>
-            <button class="sidebar-btn" onclick="togglePanel('zones')" title="Зони спостереження">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path
+                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
                     </path>
-                </svg>
-            </button>
-            <button class="sidebar-btn" onclick="togglePanel('filters')" title="Фільтри">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
             </button>
             <div style="flex: 1;"></div>
-            <button class="sidebar-btn" onclick="toggleSettings()" title="Settings">
+            <button class="sidebar-btn" onclick="closeMonitor()" title="Exit to Portal">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                    </path>
-                </svg>
-            </button>
-            <button class="sidebar-btn btn-primary" onclick="triggerAddMarker()" title="Add Marker">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
                 </svg>
             </button>
         </div>
 
-        <!-- Slide Panel -->
-        <div id="side-panel" class="side-panel">
-            <div id="panel-content">
-                <!-- Content will be injected by JS -->
-            </div>
-        </div>
-
-        <!-- Right Toolbar -->
-        <div class="map-toolbar-right">
-            <div class="search-box">
-                <input type="text" id="map-search" placeholder="Знайти адресу або координати..."
-                    onkeypress="if(event.key==='Enter')handleSearch(this.value)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </div>
-
-            <div class="toolbar-group">
-                <button class="toolbar-btn" onclick="toggleFullscreen()" title="Fullscreen">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
-                    </svg>
-                </button>
-                <button class="toolbar-btn" onclick="toggleFavorite()" title="Favorite Locations">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon
-                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                        </polygon>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="zoom-controls">
-                <button onclick="map.zoomIn()" class="toolbar-btn">+</button>
-                <div style="height: 1px; background: rgba(255,255,255,0.1); width: 80%;"></div>
-                <button onclick="map.zoomOut()" class="toolbar-btn">-</button>
-            </div>
-        </div>
-
-        <div id="map-controls"
-            style="position: absolute; top: 80px; left: 70px; z-index: 1001; background: rgba(21, 25, 33, 0.9); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); width: 280px; backdrop-filter: blur(10px);">
-            <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
-                <div
-                    style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-right: 10px; box-shadow: 0 0 10px #ef4444;">
+        <!-- Main Display Area -->
+        <div class="map-main-area">
+            <header class="map-system-header">
+                <div class="system-title">
+                    <span>//</span> TACTICAL OPERATIONS CENTER // GLOBAL VIEW
                 </div>
-                <h3 style="font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; color: white;">TACTICAL MONITOR
-                </h3>
-                <span class="status-badge status-live">LIVE</span>
-            </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: monospace;">LAT: 50.4501 | LON: 30.5234
+                    </div>
+                    <button class="back-to-portal" onclick="closeMonitor()">PORTAL_EXIT</button>
+                </div>
+            </header>
 
-            <div style="margin-bottom: 1.5rem;">
-                <label
-                    style="display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.5rem; text-transform: uppercase;">Map
-                    Style</label>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
-                        <input type="radio" name="map-style" value="dark" checked onchange="changeMapStyle('dark')">
-                        Dark OPS
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
-                        <input type="radio" name="map-style" value="topo" onchange="changeMapStyle('topo')"> Topographic
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
-                        <input type="radio" name="map-style" value="sat" onchange="changeMapStyle('sat')"> Satellite
-                    </label>
+            <div id="map" style="flex: 1; z-index: 1;"></div>
+
+            <!-- Floating Global Panels -->
+            <div class="floating-panels-container">
+                <!-- Active Units Card -->
+                <div id="card-active-units" class="tactical-card active">
+                    <div class="card-header">
+                        <span>Active Units</span>
+                        <div style="width: 6px; height: 6px; background: #3b82f6; border-radius: 50%;"></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div
+                            style="display: flex; align-items: center; gap: 10px; background: rgba(59, 130, 246, 0.05); padding: 10px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.1);">
+                            <div
+                                style="width: 36px; height: 36px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--accent-blue);">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                    <path d="M2 17l10 5 10-5"></path>
+                                </svg>
+                            </div>
+                            <div style="flex:1">
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">Eagle-One
+                                </div>
+                                <div
+                                    style="font-size: 0.6rem; color: var(--accent-green); font-weight: bold; letter-spacing: 1px;">
+                                    MISSION_ACTIVE</div>
+                            </div>
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div
+                                style="width: 36px; height: 36px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </div>
+                            <div style="flex:1">
+                                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">
+                                    Shield-Alpha</div>
+                                <div
+                                    style="font-size: 0.6rem; color: var(--accent-blue); font-weight: bold; letter-spacing: 1px;">
+                                    STANDBY</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personnel Status Card -->
+                <div id="card-personnel-status" class="tactical-card">
+                    <div class="card-header"><span>Personnel Status</span></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="text-align: center; border-right: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 1.2rem; font-weight: 800; color: #10b981;">142</div>
+                            <div style="font-size: 0.55rem; color: #94a3b8;">ACTIVE_OPS</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.2rem; font-weight: 800; color: #3b82f6;">12</div>
+                            <div style="font-size: 0.55rem; color: #94a3b8;">SQUAD_SYNC</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Layers Card -->
+                <div id="card-map-layers" class="tactical-card">
+                    <div class="card-header"><span></span>Intelligence Layers</span></div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label
+                            style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; cursor: pointer;">
+                            <span>Enemy Units</span>
+                            <input type="checkbox" checked onchange="toggleLayer('enemy')">
+                        </label>
+                        <label
+                            style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; cursor: pointer;">
+                            <span>Friendly Assets</span>
+                            <input type="checkbox" checked onchange="toggleLayer('ally')">
+                        </label>
+                        <label
+                            style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; cursor: pointer;">
+                            <span>Signal Heatmap</span>
+                            <input type="checkbox">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Map Styles Card -->
+                <div id="card-map-styles" class="tactical-card" style="max-height: 480px; overflow-y: auto;">
+                    <div class="card-header"><span>Map Selection // КАРТИ</span></div>
+
+                    <!-- SATELLITE -->
+                    <div
+                        style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 800; margin: 10px 0 8px; letter-spacing: 1px;">
+                        СУПУТНИКОВІ КАРТИ</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="map-style-opt" onclick="changeMapStyle('sat_esri')">
+                            <div class="map-preview"><img
+                                    src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Супутникова (ESRI)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('ESRI_SAT')">?</div>
+                        </div>
+                        <div class="map-style-opt" onclick="changeMapStyle('sat_geoint')">
+                            <div class="map-preview" style="filter: contrast(1.4);"><img
+                                    src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Супутникова (GeoInt)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('GEOINT_SAT')">?</div>
+                        </div>
+                        <div class="map-style-opt" onclick="changeMapStyle('sat_planet')">
+                            <div class="map-preview" style="filter: saturate(1.5);"><img
+                                    src="https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Супутникова (Planet.com)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('PLANET_SAT')">?</div>
+                        </div>
+                    </div>
+
+                    <!-- TOPO -->
+                    <div
+                        style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 800; margin: 15px 0 8px; letter-spacing: 1px;">
+                        ТОПОГРАФІЧНІ КАРТИ</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="map-style-opt" onclick="changeMapStyle('topo')">
+                            <div class="map-preview"><img
+                                    src="https://images.unsplash.com/photo-1501533840457-4f7ad6dd3fa4?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Топографічна (OpenTopo)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('OPEN_TOPO')">?</div>
+                        </div>
+                        <div class="map-style-opt" onclick="changeMapStyle('topo_dark')">
+                            <div class="map-preview"><img
+                                    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Топографічна темна</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('TOPO_DARK')">?</div>
+                        </div>
+                        <div class="map-style-opt" onclick="changeMapStyle('topo_visicom')">
+                            <div class="map-preview" style="filter: hue-rotate(-10deg);"><img
+                                    src="https://images.unsplash.com/photo-1569336415962-a4bd9f6dfc0f?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Топографічна (Візіком)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('VISICOM')">?</div>
+                        </div>
+                    </div>
+
+                    <!-- STAFF -->
+                    <div
+                        style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 800; margin: 15px 0 8px; letter-spacing: 1px;">
+                        ШТАБНІ КАРТИ</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="map-style-opt" onclick="changeMapStyle('staff_service')">
+                            <div class="map-preview" style="filter: sepia(0.3);"><img
+                                    src="https://images.unsplash.com/photo-1563291074-2bf8677ac0e5?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Штабна (Топослужба)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('STAFF_SERVICE')">?
+                            </div>
+                        </div>
+                        <div class="map-style-opt" onclick="changeMapStyle('staff_old')">
+                            <div class="map-preview" style="filter: grayscale(1) sepia(0.5);"><img
+                                    src="https://images.unsplash.com/photo-1548345680-f5475ee511d7?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Штабна (застаріла)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('STAFF_OLD')">?</div>
+                        </div>
+                    </div>
+
+                    <!-- OTHER -->
+                    <div
+                        style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 800; margin: 15px 0 8px; letter-spacing: 1px;">
+                        ІНШІ КАРТИ</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="map-style-opt" onclick="changeMapStyle('osm')">
+                            <div class="map-preview"><img
+                                    src="https://images.unsplash.com/photo-1544256718-3bcf237f3974?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">OpenStreetMap</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('OSM')">?</div>
+                        </div>
+                        <div class="map-style-opt" onclick="changeMapStyle('street')">
+                            <div class="map-preview"><img
+                                    src="https://images.unsplash.com/photo-1569336415962-a4bd9f6dfc0f?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Карта вулиць (ESRI)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('STREET')">?</div>
+                        </div>
+                    </div>
+
+                    <!-- MARITIME -->
+                    <div
+                        style="font-size: 0.6rem; color: var(--accent-blue); font-weight: 800; margin: 15px 0 8px; letter-spacing: 1px;">
+                        МОРСЬКІ КАРТИ</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="map-style-opt" onclick="changeMapStyle('maritime')">
+                            <div class="map-preview"><img
+                                    src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&q=80&w=100">
+                            </div>
+                            <span style="flex:1">Морська (Navionics)</span>
+                            <div class="style-help" onclick="event.stopPropagation(); showMapHelp('MARITIME')">?</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div style="margin-bottom: 1rem;">
-                <label
-                    style="display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.5rem; text-transform: uppercase;">Tactical
-                    Layers</label>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
-                        <input type="checkbox" checked onchange="toggleLayer('enemy')"> Enemy Units
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer;">
-                        <input type="checkbox" checked onchange="toggleLayer('ally')"> Friendly Assets
-                    </label>
-                </div>
+            <!-- Right Zoom Controls -->
+            <div
+                style="position: absolute; right: 20px; bottom: 100px; z-index: 1005; display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="map.zoomIn()"
+                    style="width: 32px; height: 32px; background: rgba(13,17,23,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; cursor: pointer;">+</button>
+                <button onclick="map.zoomOut()"
+                    style="width: 32px; height: 32px; background: rgba(13,17,23,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; cursor: pointer;">-</button>
             </div>
 
-            <div id="admin-tools"
-                style="display: none; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-                <h4 style="font-size: 0.7rem; color: #f97316; margin-bottom: 0.5rem;">COMMAND (ADMIN)</h4>
-                <div id="pending-users" style="max-height: 200px; overflow-y: auto;">
-                    <!-- List of users to approve -->
+            <div class="intel-feed"
+                style="position: relative; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.4);">
+                <div class="intel-track">
+                    <div class="intel-item"><span>[SYNC]</span> SATELLITE CONNECTION OPTIMAL</div>
+                    <div class="intel-item"><span>[INFO]</span> 23 NEW FORIFICATIONS IDENTIFIED IN SECTOR 7</div>
+                    <div class="intel-item"><span>[WARN]</span> UNIDENTIFIED UNIT CROSSING BORDER NEAR KHARKIV</div>
                 </div>
             </div>
         </div>
-
-        <!-- Unit Details Panel -->
-        <div id="unit-details" class="unit-details-panel">
-            <div id="unit-details-content">
-                <!-- Content injected via JS -->
-            </div>
-            <div style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
-                <button class="auth-btn" style="background: #ef4444; font-size: 0.75rem;"
-                    onclick="closeUnitDetails()">CLOSE UNIT FILE</button>
-            </div>
-        </div>
-
-        <!-- Intel Feed at bottom -->
-        <div class="intel-feed">
-            <div class="intel-label">
-                <span style="color:red">●</span> LIVE INTEL FEED
-            </div>
-            <div class="intel-track">
-                <div class="intel-item"><span>[SYNC]</span> SATELLITE CONNECTION OPTIMAL</div>
-                <div class="intel-item"><span>[INFO]</span> 23 NEW FORIFICATIONS IDENTIFIED IN SECTOR 7</div>
-                <div class="intel-item"><span>[WARN]</span> UNIDENTIFIED UNIT CROSSING BORDER NEAR KHARKIV</div>
-                <div class="intel-item"><span>[SYNC]</span> REFRESHING TACTICAL LAYERS...</div>
-                <div class="intel-item"><span>[INFO]</span> ALL NODES REPORTING NOMINAL PERFORMANCE</div>
-                <!-- Duplicate for seamless scroll -->
-                <div class="intel-item"><span>[SYNC]</span> SATELLITE CONNECTION OPTIMAL</div>
-                <div class="intel-item"><span>[INFO]</span> 23 NEW FORIFICATIONS IDENTIFIED IN SECTOR 7</div>
-                <div class="intel-item"><span>[WARN]</span> UNIDENTIFIED UNIT CROSSING BORDER NEAR KHARKIV</div>
-                <div class="intel-item"><span>[SYNC]</span> REFRESHING TACTICAL LAYERS...</div>
-                <div class="intel-item"><span>[INFO]</span> ALL NODES REPORTING NOMINAL PERFORMANCE</div>
-            </div>
-        </div>
-        <div id="map"></div>
+    </div>
     </div>
 
-    <script src="app.js?v=3.3"></script>
+    <!-- System Modal Overlay -->
+    <div id="system-modal" class="registration-overlay">
+        <div class="registration-container" style="max-width: 900px; width: 90%;">
+            <div class="modal-header-tactical">
+                <h2 id="modal-title">SYSTEM_MODULE</h2>
+                <button onclick="closeModal()" class="icon-btn"
+                    style="font-size: 1.5rem; color: var(--text-secondary);">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body-tactical" style="min-height: 450px;">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=3.7"></script>
 </body>
 
 </html>

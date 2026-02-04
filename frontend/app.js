@@ -8,11 +8,28 @@ let currentToken = localStorage.getItem("token");
 let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 const mapStyles = {
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }),
+    // SATELLITE
+    sat_esri: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+    sat_geoint: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, className: 'map-geoint' }),
+    sat_planet: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, className: 'map-planet' }),
+
+    // TOPOGRAPHIC
     topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17 }),
-    sat: L.layerGroup([
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+    topo_dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }),
+    topo_visicom: L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', { maxZoom: 19, className: 'map-visicom' }),
+
+    // STAFF
+    staff_service: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: 'map-staff-service' }),
+    staff_old: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, className: 'map-staff-old' }),
+
+    // OTHER
+    osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }),
+    street: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+
+    // MARITIME
+    maritime: L.layerGroup([
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, className: 'map-maritime' }),
+        L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', { maxZoom: 18 })
     ])
 };
 
@@ -31,7 +48,7 @@ function toggleAuth(isRegister) {
     document.getElementById("register-form").style.display = isRegister ? "block" : "none";
 }
 
-console.log("%c KORTEX SYSTEM READY [V3.3] ", "background: #0ea5e9; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
+console.log("%c KORTEX SYSTEM READY [V3.7] ", "background: #0ea5e9; color: white; font-weight: bold; border: 2px solid white; padding: 5px;");
 
 async function handleLogin() {
     const user = document.getElementById("username").value.trim().toLowerCase();
@@ -46,6 +63,7 @@ async function handleLogin() {
         isAdmin = true;
         localStorage.setItem("token", "super_admin_demo");
         localStorage.setItem("isAdmin", "true");
+        initAdminUI();
         showPortal();
         return;
     }
@@ -67,6 +85,7 @@ async function handleLogin() {
             isAdmin = data.is_admin;
             localStorage.setItem("token", currentToken);
             localStorage.setItem("isAdmin", isAdmin);
+            initAdminUI();
             showPortal();
         } else {
             if (response.status === 403) {
@@ -112,21 +131,53 @@ function hideAdvancedReg() {
     document.getElementById("auth-screen").style.display = "flex";
 }
 
+let regDocs = { military: null, passport: null };
+
+function handleFileSelect(input, previewId) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const base64 = e.target.result;
+        if (previewId === 'military-preview') regDocs.military = base64;
+        else regDocs.passport = base64;
+
+        document.getElementById(previewId).innerText = `✅ Файл обрано: ${file.name}`;
+    };
+    reader.readAsDataURL(file);
+}
+
 function handleAdvancedRegister() {
-    const email = document.getElementById("reg-email").value;
-    const user = document.getElementById("reg-username").value;
+    const data = {
+        id: Date.now(),
+        lastname: document.getElementById("reg-lastname").value,
+        firstname: document.getElementById("reg-firstname").value,
+        middlename: document.getElementById("reg-middlename").value,
+        phone: document.getElementById("reg-phone").value,
+        email: document.getElementById("reg-email").value,
+        unit: document.getElementById("reg-unit").value,
+        position: document.getElementById("reg-position").value,
+        guarantor: document.getElementById("reg-guarantor").value,
+        username: document.getElementById("reg-username").value,
+        pass: document.getElementById("reg-password").value,
+        docs: regDocs,
+        timestamp: new Date().toISOString()
+    };
 
-    if (!email || !user) return alert("Будь ласка, заповніть обов'язкові поля.");
-
-    // Check if on GitHub Pages
-    const isGitHub = window.location.hostname.includes('github.io');
-
-    if (isGitHub) {
-        hideAdvancedReg();
-        showPending();
-    } else {
-        handleRegister();
+    if (!data.username || !data.email || !data.lastname) {
+        return alert("Будь ласка, заповніть обов'язкові поля.");
     }
+
+    // Save to localStorage (Persistence for Demo)
+    let pending = JSON.parse(localStorage.getItem("kortex_pending_regs") || "[]");
+    pending.push(data);
+    localStorage.setItem("kortex_pending_regs", JSON.stringify(pending));
+
+    hideAdvancedReg();
+    showPending();
+
+    console.log("%c [REG] Application saved locally for admin approval. ", "background: #f59e0b; color: black; font-weight: bold;");
 }
 
 function showPending() {
@@ -153,6 +204,72 @@ function enterDemoMode() {
     showPortal();
 }
 
+// --- System Modal Logic ---
+function openModal(title, contentHtml) {
+    document.getElementById("modal-title").innerText = title;
+    document.getElementById("modal-body").innerHTML = contentHtml;
+    document.getElementById("system-modal").classList.add("active");
+}
+
+function closeModal() {
+    document.getElementById("system-modal").classList.remove("active");
+}
+
+function openApp(appName) {
+    const apps = {
+        'VEZHA': {
+            title: 'VEZHA // DRONE_INTEL_SYSTEM',
+            content: `
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div style="background: #000; border-radius: 8px; height: 350px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 1px solid var(--border-color);">
+                        <img src="https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc?auto=format&fit=crop&q=80&w=800" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8; filter: grayscale(0.5) contrast(1.2);">
+                        <div style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px); pointer-events: none;"></div>
+                        <div style="position: absolute; top: 20px; left: 20px; color: var(--accent-green); font-family: monospace; font-size: 0.9rem; font-weight: bold; text-shadow: 0 0 10px var(--accent-green);">● REC [LIVE] // TACTICAL_UNIT_42</div>
+                        <div style="position: absolute; bottom: 20px; right: 20px; color: var(--text-secondary); font-family: monospace; font-size: 0.7rem;">ALT: 142m // SPD: 44km/h // BAT: 82%</div>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem; letter-spacing: 1px;">TELEMETRY_STATUS</h3>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border-left: 3px solid var(--accent-blue);">
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">CONNECTION_SIGNAL</div>
+                                <div style="color: var(--accent-green); font-weight: 800;">STABLE (98%)</div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">SAT_LINK</div>
+                                <div style="color: var(--accent-blue); font-weight: 800;">ENCRYPTED</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">GIMBAL_ORIENTATION</div>
+                                <div style="color: var(--text-primary); font-family: monospace;">-12.4°, +4.2°, 0.0°</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        'ELEMENT': {
+            title: 'ELEMENT // E2EE_TACTICAL_CHAT',
+            content: `
+                <div class="chat-terminal">
+                    <div class="chat-history">
+                        <div class="chat-entry"><span class="chat-timestamp">[07:12:01]</span> <span class="chat-sender">ALPHA_ONE:</span> Прийнято. Виходимо на позицію 42.1.</div>
+                        <div class="chat-entry"><span class="chat-timestamp">[07:12:45]</span> <span class="chat-sender hq">HQ_COMMAND:</span> УВАГА! Зафіксовано рух техніки в квадраті B4.</div>
+                        <div class="chat-entry"><span class="chat-timestamp">[07:13:10]</span> <span class="chat-sender">ALPHA_ONE:</span> Візуальний контакт підтверджено. Чекаю наказ.</div>
+                        <div class="chat-entry" style="color: var(--accent-green); opacity: 0.6;">--- SECURE CONNECTION ESTABLISHED ---</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" placeholder="TYPE_MESSAGE..." style="flex: 1; background: transparent; border: none; color: white; font-family: monospace; outline: none;">
+                        <button class="auth-btn" style="width: auto; padding: 0 20px; height: 40px; font-size: 0.7rem;">SEND_COMMAND</button>
+                    </div>
+                </div>
+            `
+        }
+    };
+
+    const app = apps[appName] || { title: appName, content: '<div style="padding: 60px; text-align: center; color: var(--text-secondary); opacity: 0.5; letter-spacing: 2px;">MODULE_IN_DEVELOPMENT...</div>' };
+    openModal(app.title, app.content);
+}
+
 // --- Portal/Monitor Transitions ---
 function openMonitor() {
     document.getElementById("portal-screen").style.display = "none";
@@ -160,15 +277,37 @@ function openMonitor() {
 
     if (!map) {
         initMap();
+    } else {
+        setTimeout(() => map.invalidateSize(), 100);
     }
 
     if (isAdmin) {
-        document.getElementById("admin-tools").style.display = "block";
-        loadPendingUsers();
+        // Handle admin tools if needed in concept
     }
 
     loadMarkers();
 }
+
+function toggleTacticalCard(type) {
+    const cardId = `card-${type}`;
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    // Toggle card visibility
+    const isActive = card.classList.contains('active');
+
+    // Deactivate all others for clean look (optional, but good for demo)
+    document.querySelectorAll('.tactical-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+
+    if (!isActive) {
+        card.classList.add('active');
+        // Find the button and make it active
+        const btn = document.querySelector(`.sidebar-btn[onclick*="${type}"]`);
+        if (btn) btn.classList.add('active');
+    }
+}
+
 
 function demoMarkers() {
     markersLayer.clearLayers();
@@ -190,7 +329,7 @@ function initMap() {
         attributionControl: false
     }).setView([50.4501, 30.5234], 10);
 
-    currentBaseLayer = mapStyles.dark;
+    currentBaseLayer = mapStyles.topo_dark;
     currentBaseLayer.addTo(map);
 
     markersLayer.addTo(map);
@@ -211,128 +350,7 @@ function createNewMarker(lat, lon) {
     addMarker(lat, lon, type, title, desc);
 }
 
-// --- Side Panel Logic ---
-let activePanel = null;
-
-function togglePanel(type) {
-    const panel = document.getElementById("side-panel");
-    const content = document.getElementById("panel-content");
-
-    if (activePanel === type) {
-        panel.classList.remove("active");
-        activePanel = null;
-        return;
-    }
-
-    panel.classList.add("active");
-    activePanel = type;
-    renderPanelContent(type);
-}
-
-function renderPanelContent(type) {
-    const content = document.getElementById("panel-content");
-    let html = "";
-
-    if (type === 'layers') {
-        html = `
-            <div class="panel-header"><h2>Шари</h2><button class="icon-btn" onclick="togglePanel('layers')">×</button></div>
-            <div class="panel-search-wrapper"><input type="text" class="panel-search" placeholder="Пошук за назвою шару..."></div>
-            <div class="panel-body">
-                <div class="category-title">Глобальні</div>
-                <div class="list-item">
-                    <div class="list-item-icon">🚩</div>
-                    <div class="list-item-info"><div class="list-item-name">Зони відповідальності</div><div class="list-item-desc">6 од.</div></div>
-                </div>
-                <div class="list-item">
-                    <div class="list-item-icon">🚧</div>
-                    <div class="list-item-info"><div class="list-item-name">Інженерні загородження рф</div><div class="list-item-desc">3983 од.</div></div>
-                </div>
-                <div class="list-item" onclick="toggleTrenches()">
-                    <div class="list-item-icon">⛏️</div>
-                    <div class="list-item-info"><div class="list-item-name">Система траншей рф</div><div class="list-item-desc">23451 од.</div></div>
-                </div>
-            </div>
-        `;
-    } else if (type === 'history') {
-        html = `
-            <div class="panel-header"><h2>Історичні стани</h2><button class="icon-btn" onclick="togglePanel('history')">×</button></div>
-            <div class="panel-search-wrapper"><input type="text" class="panel-search" placeholder="Пошук..."></div>
-            <div class="panel-body">
-                <div class="list-item">
-                    <div class="list-item-info"><div class="list-item-name">(ЛБЗ) Донецького напрямку</div><div class="list-item-desc">03/12/2025</div></div>
-                </div>
-                <div class="list-item">
-                    <div class="list-item-info"><div class="list-item-name">ЛБЗ Запорізького напрямку</div><div class="list-item-desc">01/06/2023 - 15/10/2023</div></div>
-                </div>
-            </div>
-        `;
-    } else if (type === 'maps') {
-        html = `
-            <div class="panel-header"><h2>Карти</h2><button class="icon-btn" onclick="togglePanel('maps')">×</button></div>
-            <div class="panel-body">
-                <div class="list-item" onclick="changeMapStyle('sat')">
-                    <img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/350/600" width="40" height="40" style="border-radius:4px">
-                    <div class="list-item-info"><div class="list-item-name">Супутникова (ESRI)</div></div>
-                </div>
-                <div class="list-item" onclick="changeMapStyle('topo')">
-                    <img src="https://b.tile.opentopomap.org/10/600/350.png" width="40" height="40" style="border-radius:4px">
-                    <div class="list-item-info"><div class="list-item-name">Топографічна</div></div>
-                </div>
-                <div class="list-item" onclick="changeMapStyle('dark')">
-                    <div style="width:40px; height:40px; background:#111; border-radius:4px; border:1px solid #334155"></div>
-                    <div class="list-item-info"><div class="list-item-name">Топографічна темна (CartoDB)</div></div>
-                </div>
-            </div>
-        `;
-    } else if (type === 'objects') {
-        html = `
-            <div class="panel-header"><h2>Список об'єктів</h2><button class="icon-btn" onclick="togglePanel('objects')">×</button></div>
-            <div class="panel-body" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#4b5563; padding-top: 4rem;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:1rem; opacity:0.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                <div style="font-size: 0.8rem;">Об'єктів не знайдено</div>
-            </div>
-        `;
-    } else if (type === 'zones') {
-        html = `
-            <div class="panel-header"><h2>Зони спостереження</h2><button class="icon-btn" onclick="togglePanel('zones')">×</button></div>
-            <div class="panel-body" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top: 4rem;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:1rem; color:#3b82f6; opacity:0.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                <div style="font-size: 0.8rem; color: #94a3b8; max-width: 300px; margin-bottom: 2rem; line-height: 1.5;">
-                    Для отримання сповіщень про об'єкти у зоні ваших інтересів натисніть кнопку нижче.
-                </div>
-                <button class="auth-btn" style="width: auto; padding: 10px 30px; background: #3b82f6;">Створити зону</button>
-            </div>
-        `;
-    } else if (type === 'filters') {
-        const filterCategories = [
-            "Шари", "Зона", "Присутність / боєздатність", "Прикріплення",
-            "Пошукова фраза", "Ідентифікація", "Тип джерела",
-            "Надійність / достовірність", "Тип об'єкта", "Останній редактор"
-        ];
-        html = `
-            <div class="panel-header"><h2>Фільтри</h2><button class="icon-btn" onclick="togglePanel('filters')">×</button></div>
-            <div style="display: flex; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <div style="flex: 1; padding: 10px; text-align: center; font-size: 0.75rem; border-bottom: 2px solid #3b82f6; color: white;">Усі фільтри</div>
-                <div style="flex: 1; padding: 10px; text-align: center; font-size: 0.75rem; color: #64748b;">Набори</div>
-            </div>
-            <div class="panel-body" style="padding: 0;">
-                ${filterCategories.map(cat => `
-                    <div style="padding: 12px 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                        <span style="font-size: 0.8rem; color: #94a3b8;">${cat}</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                `).join('')}
-            </div>
-            <div style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
-                <button class="auth-btn" style="flex: 1; background: #272e3a; font-size: 0.75rem;">Очистити</button>
-                <button class="auth-btn" style="flex: 1; background: #3b82f6; font-size: 0.75rem;">Застосувати</button>
-            </div>
-        `;
-    }
-
-    content.innerHTML = html;
-}
-
+// --- Floating Tactical Panels (Replacement for side-panel) ---
 function triggerAddMarker() {
     showNotification("Click anywhere on the map to place a marker");
 }
@@ -368,11 +386,48 @@ function showHistory() {
 }
 
 function showMedia() {
-    showNotification("Opening asset library...");
+    const assets = [
+        { name: 'Aerial_Recon_001.jpg', url: 'https://images.unsplash.com/photo-1590218126487-d63eb709fd07?auto=format&fit=crop&q=80&w=400', type: 'IMG' },
+        { name: 'Sector_7_Sat.jpg', url: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=400', type: 'IMG' },
+        { name: 'Intel_Report_V4.pdf', url: '', type: 'PDF' }
+    ];
+
+    const html = `
+        <div class="tactical-grid">
+            ${assets.map(asset => `
+                <div class="tactical-media-card">
+                    ${asset.type === 'IMG'
+            ? `<img src="${asset.url}" alt="${asset.name}">`
+            : `<div style="height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; gap: 15px;">
+                               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                               <span style="font-size: 0.8rem; font-weight: bold; color: var(--accent-blue);">DOCUMENT_LOCKED</span>
+                           </div>`}
+                    <div class="tactical-media-info">
+                        <span>${asset.name}</span>
+                        <span style="color: var(--accent-blue); cursor: pointer;">DOWNLOAD_▼</span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    openModal("ASSETS // РОЗВІДДАНІ_ТА_МЕДІА", html);
 }
 
 function showAlerts() {
-    showNotification("System: No active threats detected in your sector.");
+    const html = `
+        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 20px; border-radius: 8px; color: var(--accent-red); margin-bottom: 2rem; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; height: 100%; width: 4px; background: var(--accent-red);"></div>
+            <strong style="font-size: 1.1rem; letter-spacing: 1px;">CRITICAL_ALERT:</strong><br>
+            Зафіксовано спробу несанкціонованого доступу до S-Sector 4.
+        </div>
+        <div style="color: var(--text-secondary); font-family: monospace; font-size: 0.85rem; line-height: 1.8;">
+            <div style="margin-bottom: 5px;"><span style="color: var(--accent-blue);">[06:42:15]</span> SYSTEM: NODE_SYNC_COMPLETED</div>
+            <div style="margin-bottom: 5px;"><span style="color: var(--accent-blue);">[06:40:02]</span> SATELLITE: CONNECTION_OPTIMIZED</div>
+            <div style="margin-bottom: 5px;"><span style="color: var(--accent-blue);">[06:35:58]</span> MONITOR: 42 NEW OBJECTS IDENTIFIED</div>
+            <div style="margin-bottom: 5px;"><span style="color: var(--accent-blue);">[06:12:31]</span> AUTH: SUPER_ADMIN_LOGIN_GRANTED</div>
+        </div>
+    `;
+    openModal("SENSORS // СИСТЕМНІ_ПОВІДОМЛЕННЯ", html);
 }
 
 // --- Layer Simulations ---
@@ -573,21 +628,31 @@ async function addMarker(lat, lon, type, label, description) {
 
 // --- Admin Logic ---
 async function loadPendingUsers() {
+    let users = [];
     try {
         const response = await fetch(`${API_URL}/admin/pending`, {
             headers: { "Authorization": `Bearer ${currentToken}` }
         });
-        const users = await response.json();
-        renderPendingUsersList(users);
+        if (response.ok) users = await response.json();
     } catch (err) {
-        // Fallback for GitHub: Show mock pending users for Admin showcase
-        const mockUsers = [
-            { id: 101, username: "Sgt. Petrov" },
-            { id: 102, username: "Lt. Ivanova" },
-            { id: 103, username: "Unit-772" }
-        ];
-        renderPendingUsersList(mockUsers);
+        // Fallback or offline
     }
+
+    // Merge with localStorage pending registrations
+    const localPending = JSON.parse(localStorage.getItem("kortex_pending_regs") || "[]");
+    localPending.forEach(lp => {
+        users.push({ id: lp.id, username: lp.username, isLocal: true, unit: lp.unit });
+    });
+
+    // Final mock users if still empty
+    if (users.length === 0) {
+        users = [
+            { id: 101, username: "Sgt. Petrov", unit: "424 ОМБр" },
+            { id: 102, username: "Lt. Ivanova", unit: "A0000" }
+        ];
+    }
+
+    renderPendingUsersList(users);
 }
 
 function renderPendingUsersList(users) {
@@ -607,6 +672,18 @@ function renderPendingUsersList(users) {
 }
 
 async function approveUser(userId, username) {
+    // If local registration, remove from localStorage
+    let localPending = JSON.parse(localStorage.getItem("kortex_pending_regs") || "[]");
+    const foundLocal = localPending.find(u => u.id == userId);
+
+    if (foundLocal) {
+        localPending = localPending.filter(u => u.id != userId);
+        localStorage.setItem("kortex_pending_regs", JSON.stringify(localPending));
+        showNotification(`ACCESS GRANTED: ${username} (LOCAL STORAGE APPROVED)`);
+        loadPendingUsers();
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/admin/approve/${userId}`, {
             method: "POST",
@@ -617,15 +694,12 @@ async function approveUser(userId, username) {
             showNotification(`ACCESS GRANTED: ${username}`);
             loadPendingUsers();
         } else {
-            // Local bypass for GitHub
-            showNotification(`ACCESS GRANTED: ${username} (OFFLINE MODE)`);
-            document.querySelector(`button[onclick="approveUser(${userId}, '${username}')"]`).parentElement.remove();
+            showNotification(`ACCESS GRANTED: ${username} (BYPASSED)`);
+            loadPendingUsers();
         }
     } catch (err) {
-        // Local bypass for GitHub
-        showNotification(`ACCESS GRANTED: ${username} (OFFLINE MODE)`);
-        const item = document.querySelector(`button[onclick*="approveUser(${userId}"]`);
-        if (item) item.parentElement.remove();
+        showNotification(`ACCESS GRANTED: ${username} (DEBUG MODE)`);
+        loadPendingUsers();
     }
 }
 
@@ -636,3 +710,151 @@ setInterval(() => {
     const timeStr = now.toLocaleTimeString('uk-UA', { hour12: false });
     // Just a fun way to simulate a ticking clock in the status bar if we had one
 }, 1000);
+
+function initAdminUI() {
+    const adminBtn = document.getElementById("header-admin-tools");
+    if (adminBtn) {
+        adminBtn.style.display = isAdmin ? "flex" : "none";
+    }
+}
+
+// Call on load if token exists
+if (currentToken) {
+    document.addEventListener("DOMContentLoaded", initAdminUI);
+}
+
+function showProfile() {
+    const html = `
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+            <div style="text-align: center;">
+                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); border-radius: 50%; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: white; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);">
+                    ${isAdmin ? 'AD' : 'CS'}
+                </div>
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: 1px;">${isAdmin ? 'ADMIN_ROOT' : 'CALLSIGN_01'}</h3>
+                <div style="font-size: 0.7rem; color: var(--accent-blue); font-weight: 800; text-transform: uppercase;">${isAdmin ? 'SYSTEM_OVERSEER' : 'FIELD_OPERATIVE'}</div>
+                <div style="margin-top: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 15px; text-align: left; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.6rem; color: var(--text-secondary); margin-bottom: 4px;">CLEARANCE</div>
+                    <div style="color: ${isAdmin ? 'var(--accent-red)' : 'var(--accent-green)'}; font-weight: 800;">LEVEL_${isAdmin ? '06_RED' : '02_GREEN'}</div>
+                </div>
+            </div>
+            <div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">METRICS</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <div style="font-size: 0.6rem; color: var(--text-secondary);">LAST_SEEN</div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-family: monospace;">07:14_LOCAL</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.6rem; color: var(--text-secondary);">ENCRYPTION</div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-family: monospace;">GCM-256</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.6rem; color: var(--text-secondary);">NODE</div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-family: monospace;">KYIV_01</div>
+                        </div>
+                        <div style="text-align: right;">
+                             <button class="auth-btn" style="width: auto; height: 30px; font-size: 0.6rem; background: var(--accent-red);" onclick="logout()">LOGOUT</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    openModal("USER_PROFILE // ЛОКАЛЬНИЙ_ПРОФІЛЬ", html);
+}
+
+function showAdminTools() {
+    if (!isAdmin) return showNotification("ACCESS_DENIED: Require RED Clearance");
+    const html = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                <h4 style="font-size: 0.75rem; color: var(--accent-blue); margin-bottom: 10px;">PENDING_APPROVALS</h4>
+                <div id="modal-pending-list" style="max-height: 200px; overflow-y: auto;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border-left: 3px solid var(--accent-red); display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 0.75rem;">Officer_Step</span>
+                        <button style="background: var(--accent-green); border: none; font-size: 0.6rem; padding: 2px 5px; border-radius: 2px; cursor: pointer;">ALLOW</button>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border-left: 3px solid var(--accent-red); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem;">Unit_Leader_7</span>
+                        <button style="background: var(--accent-green); border: none; font-size: 0.6rem; padding: 2px 5px; border-radius: 2px; cursor: pointer;">ALLOW</button>
+                    </div>
+                </div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                <h4 style="font-size: 0.75rem; color: var(--accent-red); margin-bottom: 15px;">SYSTEM_CONTROL</h4>
+                <button class="auth-btn" style="height: 35px; font-size: 0.7rem; margin-bottom: 10px; background: #1e293b;" onclick="showNotification('Global ping initiated...')">Global Ping</button>
+                <div style="font-family: monospace; font-size: 0.6rem; color: var(--accent-green);">
+                    > DB_HEALTH: 100%<br>
+                    > AUTH_NODES: 4 Active<br>
+                    > SYSTEM_UPTIME: 142h
+                </div>
+            </div>
+        </div>
+    `;
+    openModal("ADMIN_CONTROL_CENTER // КЕРУВАННЯ", html);
+}
+const mapHelpData = {
+    'ESRI_SAT': {
+        title: "Супутникова від ESRI",
+        desc: "Закешовані фотознімки від ESRI (ArcGIS). Охоплює весь світ. Дані для малих масштабів від TerraColor, для великих від Maxar. Доступна для друку."
+    },
+    'GEOINT_SAT': {
+        title: "Супутникова (GeoInt / G-EGD)",
+        desc: "Висока роздільна здатність від G-EGD (Maxar, SKY SAT, ICEYE). Оновлення від 1 години до декількох днів. Охоплює весь світ. Рекомендовано для планування операцій."
+    },
+    'PLANET_SAT': {
+        title: "Супутникова від Planet.com",
+        desc: "Покриває територію України та прикордоння. Найвища частота оновлення (щомісячно). Використовує більше 200 супутників."
+    },
+    'OPEN_TOPO': {
+        title: "Топографічна (OpenTopoMap)",
+        desc: "Складена ESRI та спільнотою ArcGIS. Містить населені пункти, водні об'єкти, дороги та адміністративні кордони всього світу."
+    },
+    'TOPO_DARK': {
+        title: "Топографічна темна",
+        desc: "Стилізована в темних тонах від Carto/ESRI. Мінімальна кількість кольорів та елементів для кращого сприйняття тактичної обстановки."
+    },
+    'VISICOM': {
+        title: "Топографічна (Візіком/OSM)",
+        desc: "Детальна карта 2023 року. Покриває Україну, Молдову, рб та рф. Містить усі дороги, аж до ґрунтових та польових."
+    },
+    'STAFF_SERVICE': {
+        title: "Штабна (Топослужба)",
+        desc: "Масштаб від 1:25 000 до 1:10 000 000. Надається Топографічною службою ЗСУ. Покриває Україну та прикордонні рф."
+    },
+    'STAFF_OLD': {
+        title: "Штабна (застаріла)",
+        desc: "Масштаб до 1:50 000. Найбільш детальна на території України станом на 2017-2022 роки. Доступна для друку невеликих розмірів."
+    },
+    'OSM': {
+        title: "OpenStreetMap",
+        desc: "Створена спільнотою картографів світу. Постійно оновлюється. Охоплює весь світ, містить велику кількість даних."
+    },
+    'STREET': {
+        title: "Карта вулиць (World Street Map)",
+        desc: "Спеціалізована версія від ESRI. Візуалізована для використання при русі автотранспортом, має індикатори напрямків."
+    },
+    'MARITIME': {
+        title: "Морська (Navionics / Держгідрографія)",
+        desc: "Навігаційна карта Чорноморсько-Азовського регіону. Містить дані про глибини, зони, коридори та навігаційні об'єкти."
+    }
+};
+
+function showMapHelp(type) {
+    const info = mapHelpData[type] || { title: "UNKNOWN_SOURCE", desc: "No description available for this layer." };
+    const html = `
+        <div style="padding: 10px;">
+            <div style="color: var(--accent-blue); font-size: 0.9rem; font-weight: 800; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                ${info.title.toUpperCase()}
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-primary); font-family: 'Inter', sans-serif;">
+                ${info.desc}
+            </div>
+            <div style="margin-top: 20px; padding: 10px; background: rgba(59, 130, 246, 0.05); border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.1); font-size: 0.7rem; color: var(--accent-blue);">
+                <strong style="margin-right: 5px;">СТАТУС:</strong> ДОСТУПНА ДЛЯ ДРУКУ І ОФЛАЙН ЗАВАНТАЖЕННЯ (PRO)
+            </div>
+        </div>
+    `;
+    openModal("MAP_INTEL // ДОВІДКА_ПО_КАРТІ", html);
+}
